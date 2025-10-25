@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMatch - Movie Recommendations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        .movie-card {
+            transition: all 0.3s ease;
+        }
+        
+        .movie-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .genre-tag {
+            transition: all 0.2s ease;
+        }
+        
+        .genre-tag:hover {
+            transform: scale(1.05);
+        }
+        
+        .search-input:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .rating-stars {
+            color: #fbbf24;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 min-h-full text-white">
+    <header class="bg-black bg-opacity-50 backdrop-blur-sm sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    🎬 CineMatch
+                </h1>
+                <div class="flex items-center space-x-4">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Search movies..." 
+                        class="search-input px-4 py-2 rounded-full bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 text-white placeholder-gray-300 focus:outline-none focus:border-purple-400 w-64"
+                    >
+                    <button id="searchBtn" class="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-full font-semibold transition-colors">
+                        Search
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        <!-- Genre Filter -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Browse by Genre</h2>
+            <div class="flex flex-wrap gap-3" id="genreFilter">
+                <button class="genre-tag bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 rounded-full font-medium hover:from-purple-600 hover:to-pink-600" data-genre="all">
+                    All Movies
+                </button>
+                <button class="genre-tag bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full font-medium" data-genre="action">
+                    Action
+                </button>
+                <button class="genre-tag bg-green-600 hover:bg-green-700 px-4 py-2 rounded-full font-medium" data-genre="comedy">
+                    Comedy
+                </button>
+                <button class="genre-tag bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full font-medium" data-genre="drama">
+                    Drama
+                </button>
+                <button class="genre-tag bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-full font-medium" data-genre="sci-fi">
+                    Sci-Fi
+                </button>
+                <button class="genre-tag bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-full font-medium" data-genre="thriller">
+                    Thriller
+                </button>
+                <button class="genre-tag bg-pink-600 hover:bg-pink-700 px-4 py-2 rounded-full font-medium" data-genre="romance">
+                    Romance
+                </button>
+            </div>
+        </section>
+
+        <!-- Movies Grid -->
+        <section>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Recommended Movies</h2>
+                <div class="text-gray-300">
+                    <span id="movieCount">12</span> movies found
+                </div>
+            </div>
+            
+            <div id="moviesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <!-- No Results Message -->
+        <div id="noResults" class="text-center py-12 hidden">
+            <div class="text-6xl mb-4">🎭</div>
+            <h3 class="text-2xl font-bold mb-2">No movies found</h3>
+            <p class="text-gray-300">Try adjusting your search or browse different genres</p>
+        </div>
+    </main>
+
+    <script>
+        // Sample movie data
+        const movies = [
+            {
+                id: 1,
+                title: "Inception",
+                genre: "sci-fi",
+                year: 2010,
+                rating: 8.8,
+                director: "Christopher Nolan",
+                description: "A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
+                poster: "🌀"
+            },
+            {
+                id: 2,
+                title: "The Dark Knight",
+                genre: "action",
+                year: 2008,
+                rating: 9.0,
+                director: "Christopher Nolan",
+                description: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests.",
+                poster: "🦇"
+            },
+            {
+                id: 3,
+                title: "Pulp Fiction",
+                genre: "drama",
+                year: 1994,
+                rating: 8.9,
+                director: "Quentin Tarantino",
+                description: "The lives of two mob hitmen, a boxer, a gangster and his wife intertwine in four tales of violence and redemption.",
+                poster: "🔫"
+            },
+            {
+                id: 4,
+                title: "The Grand Budapest Hotel",
+                genre: "comedy",
+                year: 2014,
+                rating: 8.1,
+                director: "Wes Anderson",
+                description: "A writer encounters the owner of an aging high-class hotel, who tells him of his early years serving as a lobby boy.",
+                poster: "🏨"
+            },
+            {
+                id: 5,
+                title: "Interstellar",
+                genre: "sci-fi",
+                year: 2014,
+                rating: 8.6,
+                director: "Christopher Nolan",
+                description: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
+                poster: "🚀"
+            },
+            {
+                id: 6,
+                title: "Gone Girl",
+                genre: "thriller",
+                year: 2014,
+                rating: 8.1,
+                director: "David Fincher",
+                description: "With his wife's disappearance having become the focus of an intense media circus, a man sees the spotlight turned on him.",
+                poster: "🔍"
+            },
+            {
+                id: 7,
+                title: "La La Land",
+                genre: "romance",
+                year: 2016,
+                rating: 8.0,
+                director: "Damien Chazelle",
+                description: "While navigating their careers in Los Angeles, a pianist and an actress fall in love while attempting to reconcile their aspirations.",
+                poster: "💃"
+            },
+            {
+                id: 8,
+                title: "Mad Max: Fury Road",
+                genre: "action",
+                year: 2015,
+                rating: 8.1,
+                director: "George Miller",
+                description: "In a post-apocalyptic wasteland, a woman rebels against a tyrannical ruler in search for her homeland.",
+                poster: "🏎️"
+            },
+            {
+                id: 9,
+                title: "Parasite",
+                genre: "thriller",
+                year: 2019,
+                rating: 8.6,
+                director: "Bong Joon-ho",
+                description: "A poor family schemes to become employed by a wealthy family and infiltrate their household by posing as unrelated, highly qualified individuals.",
+                poster: "🏠"
+            },
+            {
+                id: 10,
+                title: "The Shape of Water",
+                genre: "romance",
+                year: 2017,
+                rating: 7.3,
+                director: "Guillermo del Toro",
+                description: "At a top secret research facility in the 1960s, a lonely janitor forms a unique relationship with an amphibious creature.",
+                poster: "🌊"
+            },
+            {
+                id: 11,
+                title: "Knives Out",
+                genre: "comedy",
+                year: 2019,
+                rating: 7.9,
+                director: "Rian Johnson",
+                description: "A detective investigates the death of a patriarch of an eccentric, combative family.",
+                poster: "🔪"
+            },
+            {
+                id: 12,
+                title: "Moonlight",
+                genre: "drama",
+                year: 2016,
+                rating: 7.4,
+                director: "Barry Jenkins",
+                description: "A young African-American man grapples with his identity and sexuality while experiencing the everyday struggles of childhood, adolescence, and burgeoning adulthood.",
+                poster: "🌙"
+            }
+        ];
+
+        let filteredMovies = [...movies];
+        let currentGenre = 'all';
+
+        // DOM elements
+        const moviesGrid = document.getElementById('moviesGrid');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const genreButtons = document.querySelectorAll('.genre-tag');
+        const movieCount = document.getElementById('movieCount');
+        const noResults = document.getElementById('noResults');
+
+        // Create movie card HTML
+        function createMovieCard(movie) {
+            const stars = '★'.repeat(Math.floor(movie.rating / 2)) + '☆'.repeat(5 - Math.floor(movie.rating / 2));
+            
+            return `
+                <div class="movie-card bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6 border border-white border-opacity-20 fade-in">
+                    <div class="text-6xl mb-4 text-center">${movie.poster}</div>
+                    <h3 class="text-xl font-bold mb-2">${movie.title}</h3>
+                    <p class="text-gray-300 text-sm mb-2">${movie.year} • ${movie.director}</p>
+                    <div class="flex items-center mb-3">
+                        <span class="rating-stars text-lg mr-2">${stars}</span>
+                        <span class="text-yellow-400 font-semibold">${movie.rating}</span>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-4 line-clamp-3">${movie.description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="bg-purple-600 bg-opacity-50 px-3 py-1 rounded-full text-xs font-medium capitalize">
+                            ${movie.genre.replace('-', ' ')}
+                        </span>
+                        <button class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all" onclick="showMovieDetails(${movie.id})">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render movies
+        function renderMovies(moviesToRender = filteredMovies) {
+            if (moviesToRender.length === 0) {
+                moviesGrid.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                movieCount.textContent = '0';
+                return;
+            }
+
+            moviesGrid.classList.remove('hidden');
+            noResults.classList.add('hidden');
+            movieCount.textContent = moviesToRender.length;
+            
+            moviesGrid.innerHTML = moviesToRender.map(createMovieCard).join('');
+        }
+
+        // Filter by genre
+        function filterByGenre(genre) {
+            currentGenre = genre;
+            
+            // Update active genre button
+            genreButtons.forEach(btn => {
+                btn.classList.remove('from-purple-500', 'to-pink-500');
+                btn.classList.add('bg-opacity-50');
+            });
+            
+            const activeBtn = document.querySelector(`[data-genre="${genre}"]`);
+            activeBtn.classList.add('from-purple-500', 'to-pink-500');
+            activeBtn.classList.remove('bg-opacity-50');
+            
+            // Filter movies
+            if (genre === 'all') {
+                filteredMovies = [...movies];
+            } else {
+                filteredMovies = movies.filter(movie => movie.genre === genre);
+            }
+            
+            // Apply search if there's a search term
+            const searchTerm = searchInput.value.trim();
+            if (searchTerm) {
+                searchMovies(searchTerm);
+            } else {
+                renderMovies();
+            }
+        }
+
+        // Search movies
+        function searchMovies(searchTerm = '') {
+            if (!searchTerm) {
+                searchTerm = searchInput.value.trim().toLowerCase();
+            } else {
+                searchTerm = searchTerm.toLowerCase();
+            }
+            
+            if (!searchTerm) {
+                renderMovies(filteredMovies);
+                return;
+            }
+            
+            const searchResults = filteredMovies.filter(movie => 
+                movie.title.toLowerCase().includes(searchTerm) ||
+                movie.director.toLowerCase().includes(searchTerm) ||
+                movie.description.toLowerCase().includes(searchTerm) ||
+                movie.genre.toLowerCase().includes(searchTerm)
+            );
+            
+            renderMovies(searchResults);
+        }
+
+        // Show movie details (placeholder function)
+        function showMovieDetails(movieId) {
+            const movie = movies.find(m => m.id === movieId);
+            const message = `🎬 ${movie.title}\n\n⭐ Rating: ${movie.rating}/10\n🎭 Director: ${movie.director}\n📅 Year: ${movie.year}\n🎪 Genre: ${movie.genre.replace('-', ' ')}\n\n📖 ${movie.description}`;
+            
+            // Create custom modal instead of alert
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-gradient-to-br from-purple-900 to-blue-900 rounded-xl p-8 max-w-md w-full border border-purple-500">
+                    <div class="text-center mb-6">
+                        <div class="text-6xl mb-4">${movie.poster}</div>
+                        <h2 class="text-2xl font-bold text-white">${movie.title}</h2>
+                    </div>
+                    <div class="space-y-3 text-gray-200">
+                        <p><span class="font-semibold">Rating:</span> ⭐ ${movie.rating}/10</p>
+                        <p><span class="font-semibold">Director:</span> ${movie.director}</p>
+                        <p><span class="font-semibold">Year:</span> ${movie.year}</p>
+                        <p><span class="font-semibold">Genre:</span> ${movie.genre.replace('-', ' ')}</p>
+                        <p class="text-sm leading-relaxed">${movie.description}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                        Close
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Event listeners
+        genreButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterByGenre(btn.dataset.genre);
+            });
+        });
+
+        searchBtn.addEventListener('click', searchMovies);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchMovies();
+            }
+        });
+
+        searchInput.addEventListener('input', () => {
+            if (searchInput.value.trim() === '') {
+                renderMovies(filteredMovies);
+            }
+        });
+
+        // Initialize app
+        renderMovies();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9942509597077f17',t:'MTc2MTQwMTYwOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
